@@ -1,0 +1,7 @@
+forgecode-fish/pkg/
+forgecode-fish/src/
+forgecode-fish/*.pkg.tar.*
+forgecode-fish-git/pkg/
+forgecode-fish-git/src/
+forgecode-fish-git/forgecode.fish/
+forgecode-fish-git/*.pkg.tar.*
