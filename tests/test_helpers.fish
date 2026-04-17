@@ -14,7 +14,8 @@ set -g _FORGE_SESSION_PROVIDER openai
 set -g _FORGE_SESSION_REASONING_EFFORT high
 __forge_exec info >/dev/null
 
-assert_contains (stub_log_last_field env._FORGE_TERM_COMMANDS) 'ls -la' 'command context exported'
+set -l exported_term_commands (stub_log_last_field env._FORGE_TERM_COMMANDS)
+assert_contains "$exported_term_commands" 'ls -la' 'command context exported'
 assert_eq openai (stub_log_last_field env.FORGE_SESSION__PROVIDER_ID) 'session provider exported'
 assert_eq high (stub_log_last_field env.FORGE_REASONING__EFFORT) 'reasoning effort exported'
 

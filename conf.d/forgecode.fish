@@ -1,12 +1,30 @@
 set -l __forge_conf_dir (path dirname (status filename))
 set -l __forge_root (path dirname $__forge_conf_dir)
+set -l __forge_functions_dir "$__forge_root/functions"
+set -l __forge_completions_dir "$__forge_root/completions"
 
-if not contains -- "$__forge_root/functions" $fish_function_path
-    set -p fish_function_path "$__forge_root/functions"
+if not test -f "$__forge_functions_dir/__forge_init.fish"
+    if test -f "$__forge_root/vendor_functions.d/__forge_init.fish"
+        set __forge_functions_dir "$__forge_root/vendor_functions.d"
+    else if test -f /usr/share/fish/vendor_functions.d/__forge_init.fish
+        set __forge_functions_dir /usr/share/fish/vendor_functions.d
+    end
 end
 
-if not contains -- "$__forge_root/completions" $fish_complete_path
-    set -p fish_complete_path "$__forge_root/completions"
+if not test -f "$__forge_completions_dir/forge.fish"
+    if test -f "$__forge_root/vendor_completions.d/forge.fish"
+        set __forge_completions_dir "$__forge_root/vendor_completions.d"
+    else if test -f /usr/share/fish/vendor_completions.d/forge.fish
+        set __forge_completions_dir /usr/share/fish/vendor_completions.d
+    end
+end
+
+if not contains -- "$__forge_functions_dir" $fish_function_path
+    set -p fish_function_path "$__forge_functions_dir"
+end
+
+if not contains -- "$__forge_completions_dir" $fish_complete_path
+    set -p fish_complete_path "$__forge_completions_dir"
 end
 
 set -g _FORGE_PLUGIN_ROOT "$__forge_root"
@@ -38,7 +56,7 @@ set -l __forge_sources \
     __forge_tab_handler.fish
 
 for __forge_file in $__forge_sources
-    source "$__forge_root/functions/$__forge_file"
+    source "$__forge_functions_dir/$__forge_file"
 end
 
 __forge_init

@@ -2,6 +2,7 @@
 set -euo pipefail
 
 fish tests/test_helpers.fish
+fish tests/test_vendor_layout.fish
 fish tests/test_dispatch.fish
 fish tests/test_core_actions.fish
 fish tests/test_actions.fish
