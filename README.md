@@ -7,6 +7,7 @@
   <img alt="Platform: fish 3.6+ / 4.x" src="https://img.shields.io/badge/platform-fish%203.6%2B%20%2F%204.x-2563eb?style=flat-square" />
   <img alt="Verification: ENV-1 and ENV-3 executed" src="https://img.shields.io/badge/verification-ENV--1%20%2B%20ENV--3-0f766e?style=flat-square" />
   <img alt="Prompt: opt-in" src="https://img.shields.io/badge/prompt-opt--in-111827?style=flat-square" />
+  <img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-1d4ed8?style=flat-square" />
 </p>
 
 <p align="center">
@@ -165,3 +166,7 @@ Current verification state:
 ## Status
 
 Alpha. The fish-native port is implemented and verified against the approved PRD/test-spec contract, with the remaining published exception being the external macOS verification lane.
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE).

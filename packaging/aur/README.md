@@ -37,4 +37,4 @@ Both packages install:
 
 - The upstream public repository URL is assumed to be `https://github.com/OneNoted/forgecode.fish`.
 - The Arch package names are `forgecode-fish` and `forgecode-fish-git`.
-- The repo currently has no top-level license file, so the package metadata uses `license=('custom')` until the project license is finalized.
+- The project license is Apache-2.0 and the package metadata should stay aligned with the top-level `LICENSE` file.
