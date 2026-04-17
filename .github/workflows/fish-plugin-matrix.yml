@@ -1,0 +1,31 @@
+name: fish-plugin-matrix
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  env-1-linux-current:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install fish and helpers
+        run: sudo apt-get update && sudo apt-get install -y fish fzf fd-find python3
+      - name: Run ENV-1 suite
+        run: bash scripts/run-fish-matrix.sh ENV-1
+
+  env-2-macos-current:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install fish and helpers
+        run: brew install fish fzf fd
+      - name: Run ENV-2 suite
+        run: bash scripts/run-fish-matrix.sh ENV-2
+
+  env-3-linux-compat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run ENV-3 compatibility suite in Debian 12 / fish 3.6.0
+        run: bash scripts/run-fish-matrix.sh ENV-3

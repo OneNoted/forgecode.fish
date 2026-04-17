@@ -1,1 +1,4 @@
 .omx/
+.forge/
+tests/.tmp/
+tests/__pycache__/
