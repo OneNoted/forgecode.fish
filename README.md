@@ -85,6 +85,7 @@ yay -S forgecode-fish-git
 ```
 
 The current package assumptions and publish checklist are documented in [`packaging/aur/README.md`](packaging/aur/README.md).
+The intended publish path is GitHub-driven: tracked metadata lives in this repo and `.github/workflows/aur.yml` pushes the matching package repo to AUR once the required secrets are configured.
 
 ### Prompt integration
 

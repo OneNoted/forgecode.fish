@@ -1,0 +1,135 @@
+name: aur
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      publish_git:
+        description: Publish forgecode-fish-git to AUR
+        required: false
+        default: false
+        type: boolean
+      publish_stable:
+        description: Publish forgecode-fish to AUR
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    env:
+      AUR_BUILDER_USER: aurbuilder
+    steps:
+      - name: Install Arch packaging tools
+        run: pacman -Syu --noconfirm git namcap openssh rsync
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Trust checkout as a git safe.directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Prepare non-root makepkg user
+        run: |
+          id -u "$AUR_BUILDER_USER" >/dev/null 2>&1 || useradd -m "$AUR_BUILDER_USER"
+          chown -R "$AUR_BUILDER_USER:$AUR_BUILDER_USER" "$GITHUB_WORKSPACE"
+      - name: Regenerate tracked .SRCINFO files
+        run: ./scripts/update-aur-srcinfo.sh
+      - name: Verify tracked metadata is committed
+        run: git -C "$GITHUB_WORKSPACE" diff --exit-code -- packaging/aur
+      - name: Validate PKGBUILDs
+        run: ./scripts/check-aur-packages.sh
+      - name: Verify stable PKGBUILD source syntax
+        run: |
+          runuser -u "$AUR_BUILDER_USER" -- sh -lc \
+            "cd '$GITHUB_WORKSPACE/packaging/aur/forgecode-fish' && env CARCH=x86_64 makepkg --printsrcinfo >/dev/null"
+      - name: Verify -git PKGBUILD source syntax
+        run: |
+          runuser -u "$AUR_BUILDER_USER" -- sh -lc \
+            "cd '$GITHUB_WORKSPACE/packaging/aur/forgecode-fish-git' && env CARCH=x86_64 makepkg --printsrcinfo >/dev/null"
+
+  publish-git:
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && inputs.publish_git)
+    needs: validate
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    env:
+      AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+      AUR_PACKAGER_NAME: ${{ secrets.AUR_PACKAGER_NAME }}
+      AUR_PACKAGER_EMAIL: ${{ secrets.AUR_PACKAGER_EMAIL }}
+    steps:
+      - name: Install publish dependencies
+        run: pacman -Syu --noconfirm git openssh rsync
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Trust checkout as a git safe.directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Verify AUR SSH key is configured
+        run: |
+          if [ -z "$AUR_SSH_PRIVATE_KEY" ]; then
+            echo 'AUR_SSH_PRIVATE_KEY is not configured' >&2
+            exit 1
+          fi
+      - name: Configure SSH for AUR
+        run: |
+          AUR_SSH_DIR="${RUNNER_TEMP}/aur-ssh"
+          install -dm700 "$AUR_SSH_DIR"
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > "$AUR_SSH_DIR/id_ed25519"
+          chmod 600 "$AUR_SSH_DIR/id_ed25519"
+          ssh-keyscan -H aur.archlinux.org > "$AUR_SSH_DIR/known_hosts"
+          echo "GIT_SSH_COMMAND=ssh -i '$AUR_SSH_DIR/id_ed25519' -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile='$AUR_SSH_DIR/known_hosts'" >> "$GITHUB_ENV"
+      - name: Publish forgecode-fish-git
+        run: ./scripts/publish-aur-package.sh forgecode-fish-git ssh://aur@aur.archlinux.org/forgecode-fish-git.git
+
+  publish-stable:
+    if: >-
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+      (github.event_name == 'workflow_dispatch' && inputs.publish_stable)
+    needs: validate
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    env:
+      AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+      AUR_PACKAGER_NAME: ${{ secrets.AUR_PACKAGER_NAME }}
+      AUR_PACKAGER_EMAIL: ${{ secrets.AUR_PACKAGER_EMAIL }}
+    steps:
+      - name: Install publish dependencies
+        run: pacman -Syu --noconfirm git openssh rsync grep
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Trust checkout as a git safe.directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Verify stable PKGBUILD is release-ready
+        run: |
+          if grep -q "sha256sums=('SKIP')" packaging/aur/forgecode-fish/PKGBUILD; then
+            echo 'forgecode-fish PKGBUILD still uses SKIP; update the release checksum before publishing stable AUR metadata' >&2
+            exit 1
+          fi
+      - name: Verify AUR SSH key is configured
+        run: |
+          if [ -z "$AUR_SSH_PRIVATE_KEY" ]; then
+            echo 'AUR_SSH_PRIVATE_KEY is not configured' >&2
+            exit 1
+          fi
+      - name: Configure SSH for AUR
+        run: |
+          AUR_SSH_DIR="${RUNNER_TEMP}/aur-ssh"
+          install -dm700 "$AUR_SSH_DIR"
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > "$AUR_SSH_DIR/id_ed25519"
+          chmod 600 "$AUR_SSH_DIR/id_ed25519"
+          ssh-keyscan -H aur.archlinux.org > "$AUR_SSH_DIR/known_hosts"
+          echo "GIT_SSH_COMMAND=ssh -i '$AUR_SSH_DIR/id_ed25519' -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile='$AUR_SSH_DIR/known_hosts'" >> "$GITHUB_ENV"
+      - name: Publish forgecode-fish
+        run: ./scripts/publish-aur-package.sh forgecode-fish ssh://aur@aur.archlinux.org/forgecode-fish.git

@@ -38,3 +38,19 @@ Both packages install:
 - The upstream public repository URL is assumed to be `https://github.com/OneNoted/forgecode.fish`.
 - The Arch package names are `forgecode-fish` and `forgecode-fish-git`.
 - The project license is Apache-2.0 and the package metadata should stay aligned with the top-level `LICENSE` file.
+
+
+## GitHub-driven publishing
+
+The intended release path is GitHub-first:
+
+- tracked package metadata lives in `packaging/aur/`
+- `.github/workflows/aur.yml` validates PKGBUILDs and `.SRCINFO`
+- `forgecode-fish-git` can publish from `main` or manual dispatch
+- `forgecode-fish` publishes from a release tag or manual dispatch once its checksum is no longer `SKIP`
+
+Required GitHub secrets:
+
+- `AUR_SSH_PRIVATE_KEY`
+- `AUR_PACKAGER_NAME` (optional)
+- `AUR_PACKAGER_EMAIL` (optional)
