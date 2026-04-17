@@ -42,7 +42,9 @@ jobs:
           id -u "$AUR_BUILDER_USER" >/dev/null 2>&1 || useradd -m "$AUR_BUILDER_USER"
           chown -R "$AUR_BUILDER_USER:$AUR_BUILDER_USER" "$GITHUB_WORKSPACE"
       - name: Regenerate tracked .SRCINFO files
-        run: ./scripts/update-aur-srcinfo.sh
+        run: |
+          runuser -u "$AUR_BUILDER_USER" -- sh -lc \
+            "cd '$GITHUB_WORKSPACE' && ./scripts/update-aur-srcinfo.sh"
       - name: Verify tracked metadata is committed
         run: git -C "$GITHUB_WORKSPACE" diff --exit-code -- packaging/aur
       - name: Validate PKGBUILDs
