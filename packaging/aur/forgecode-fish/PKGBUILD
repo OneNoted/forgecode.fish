@@ -14,7 +14,7 @@ conflicts=('forgecode-fish-git')
 source=(
   "https://github.com/OneNoted/forgecode.fish/archive/refs/tags/v${pkgver}.tar.gz"
 )
-sha256sums=('SKIP')
+sha256sums=('24719b69b72d96581e70c808712b0f031e130dec41c1abfa0943ad4bc14bc7e2')
 
 package() {
   cd "${srcdir}/forgecode.fish-${pkgver}"
